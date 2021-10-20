@@ -1,0 +1,113 @@
+//Este código está basado en elementos que no se muentran en el código.
+1. La importación de Landsat 8
+2. Dos geometrías que se utilizan en diferentes partes del código, una llamada "point" que limita la carga de las imágenes dentro de la cuenca , y otro llamado "Rim_fire" para delimitar la carga de imágenes de California.
+3. Un archivo .shp que funciona como máscara para recortar los resultados, llamado "Nicoya".
+...............................................................................................................................................................
+
+//Se carga landsat8, así como su orden de datos, filtro y fecha.
+var image = ee.Image(Landsat8
+  .filterBounds(point)
+  .filterDate("2019-01-01","2019-03-01") 
+  .sort("CLOUD_COVER")
+  .first());
+ 
+//var recorte
+var clipped = image.clip(Nicoya)
+Map.addLayer(Nicoya,{color: "7b95e8"},"P. Nicoya");
+Map.addLayer(clipped,{},"L8 Image");
+  
+
+//TrueColor para una mejor visualización
+var trueColor = {bands: ["B4", "B3", "B2"], min: 0, max: 0.3};
+Map.addLayer(clipped, trueColor, "image");
+
+//Índice de Vegetación de Diferencia Normalizada por medio de fórmula.
+var nvdi = image.normalizedDifference(["B5","B4"]);
+
+//Se agrega la paleta vegPalette para la visualización del NDVI
+var vegPalette = ["white","green"];
+Map.addLayer(nvdi.clip(Nicoya), {min:-1, max:1, palette: vegPalette}, "NDVI");
+
+//EVI Periodo seco
+//Variables solo para el evi. periodo seco
+var pseco = ee.Image(Landsat8
+  .filterBounds(point)
+  .filterDate("2019-01-01","2019-03-31")
+  .sort("CLOUD_COVER")
+  .first());
+  
+//Se agrega la variable así como su ecuación-
+var evi_seco = pseco.expression(
+  "2.5 * ((NIR-RED)/(NIR + 6 * RED -7.5 * BLUE + 1))",
+  { "NIR": pseco.select("B5"),
+  "RED": pseco.select("B4"),
+  "BLUE": pseco.select("B2")});
+  
+Map.addLayer(evi_seco.clip(Nicoya), {min: -1, max: 1, palette: vegPalette}, 'EVI_PSECO');
+//EVI lluvioso
+//Variables solo para el evi. periodo lluvioso
+var plluvia = ee.Image(Landsat8
+  .filterBounds(point)
+  .filterDate("2019-04-30","2019-07-01")
+  .sort("CLOUD_COVER")
+  .first());
+  
+//Se agrega la variable así como su ecuación-
+var evi_lluvioso = plluvia.expression(
+  "2.5 * ((NIR-RED)/(NIR + 6 * RED -7.5 * BLUE + 1))",
+  { "NIR": plluvia.select("B5"),
+  "RED": plluvia.select("B4"),
+  "BLUE": plluvia.select("B2")});
+  
+Map.addLayer(evi_lluvioso.clip(Nicoya), {min: -1, max: 1, palette: vegPalette}, 'EVI_PLLUVIOSO');
+
+//NDWI, importación de la imagen y filtrado
+var image = ee.Image(landsat8
+.filterBounds(point)
+.filterDate("2019-02-01", "2019-03-01")
+.sort("CLOUD_COVER")
+.first());
+
+
+var NDWI = image.normalizedDifference(["B5","B6"]);
+var waterPalette = ["white", "blue"];
+
+Map.addLayer(NDWI.clip(Nicoya), {min: -0.5, max: 1, palette: waterPalette}, "NDWI");
+
+//NDWBI
+var image = ee.Image(landsat8
+.filterBounds(point)
+.filterDate("2019-02-01", "2019-03-01")
+.sort("CLOUD_COVER")
+.first());
+
+var NDWBI = image.normalizedDifference(["B3","B5"]);
+var waterPalette = ["white", "blue"];
+
+Map.addLayer(NDWBI.clip(Nicoya), {min: -1, max: 0.5, palette: waterPalette}, "NDWBI");
+
+//NBDI
+//Se agrega variable de NDBI con normalizedDifference, con otras bandas.
+var ndbi = image.normalizedDifference(['B6', 'B5']);
+//se agrega paleta
+var waterPalette = ['white', 'blue'];
+//NDBI es el negativo de NDWI por lo cual se invierte.** Se debe agregar paleta waterPalette
+var barePalette = waterPalette.slice().reverse();
+
+Map.addLayer(ndbi.clip(Nicoya), {min: -1, max: 0.5, palette: barePalette}, 'NDBI');
+
+
+//BAI. Acá se 
+function addNDWI(image) {
+  var ndwi = image.normalizedDifference(['B5', 'B6']);
+  return image.addBands(ndwi);
+}
+var filtered = landsat8.filterDate('2019-01-01', '2019-12-31')
+.filterBounds(point);
+var with_ndwi = filtered.map(addNDWI);
+var image = ee.Image(filtered.first());
+var ndvi = addNDWI(image);
+
+var ndviPalette = ["white", "blue"];
+
+Map.addLayer(with_ndwi, {bands: "nd", min:-0.5, max:1, palette: ndviPalette}, "NDWI");
