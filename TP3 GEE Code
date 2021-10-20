@@ -1,4 +1,4 @@
-//Este código está basado en elementos que no se muentran en el código.
+//Este código está basado en elementos que no se muestran en el código.
 1. La importación de Landsat 8
 2. Dos geometrías que se utilizan en diferentes partes del código, una llamada "point" que limita la carga de las imágenes dentro de la cuenca , y otro llamado "Rim_fire" para delimitar la carga de imágenes de California.
 3. Un archivo .shp que funciona como máscara para recortar los resultados, llamado "Nicoya".
