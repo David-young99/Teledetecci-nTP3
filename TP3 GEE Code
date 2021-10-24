@@ -98,6 +98,25 @@ Map.addLayer(ndbi.clip(Nicoya), {min: -1, max: 0.5, palette: barePalette}, 'NDBI
 
 
 //BAI. Acá se 
+var burnImage = ee.Image(landsat8
+.filterBounds(Rim_Fire)
+.filterDate("2013-08-17", "2013-09-27")
+.sort("CLOUD_COVER")
+.first());
+
+var BAI = burnImage.expression(
+  '1.0 / ((0.1 - RED)**2 + (0.06 - NIR)**2)', {
+'NIR': burnImage.select('B5'),
+'RED': burnImage.select('B4'),
+  });
+
+var burnPalette = ["green", "blue", "yellow", "red"];
+Map.addLayer(BAI, {min: 0, max: 400, palette: burnPalette}, "BAI");
+
+var trueColor = {bands: ['B4', 'B3', 'B2'], min: 0, max: 0.3};
+Map.addLayer(burnImage, trueColor, 'burn image');
+
+//Gráfico hecho para el índice NDWI
 function addNDWI(image) {
   var ndwi = image.normalizedDifference(['B5', 'B6']);
   return image.addBands(ndwi);
@@ -106,8 +125,8 @@ var filtered = landsat8.filterDate('2019-01-01', '2019-12-31')
 .filterBounds(point);
 var with_ndwi = filtered.map(addNDWI);
 var image = ee.Image(filtered.first());
-var ndvi = addNDWI(image);
+
 
 var ndviPalette = ["white", "blue"];
-
+               
 Map.addLayer(with_ndwi, {bands: "nd", min:-0.5, max:1, palette: ndviPalette}, "NDWI");
